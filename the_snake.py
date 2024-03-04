@@ -62,19 +62,25 @@ class Apple(GameObject):
     def __init__(self):
         self.position = self.randomize_position()
         self.body_color = (255, 0, 0)
+        self.sort_apple = self.choice_sort()
 
     @staticmethod
     def randomize_position():
         """Реализация слуйного появления яблока."""
         return (
-            randint(0, GRID_WIDTH) * GRID_SIZE,
-            randint(0, GRID_HEIGHT) * GRID_SIZE
+            randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+            randint(0, GRID_HEIGHT - 1) * GRID_SIZE
         )
 
     def choice_sort(self):
         """Описание видов яблок."""
-        choice()
-        pass
+        self.sort_apple = randint(1, 2)
+        if self.sort_apple == 1:
+            self.body_color = (0, 0, 255)
+        elif self.sort_apple == 2:
+            self.body_color = (200, 20, 240)
+        else:
+            self.body_color = (255, 0, 0)
 
     # Метод draw класса Apple
     def draw(self, surface):
@@ -189,8 +195,18 @@ def main():
             screen.fill(BOARD_BACKGROUND_COLOR)
 
         if snake.get_head_position() == apple.position:
-            snake.length += 1
+#            snake.length += 1
             apple.position = apple.randomize_position()
+            apple.choice_sort()
+#            apple.draw(screen)
+            if apple.sort_apple == 1:
+                snake.length += 10
+                #apple.position = apple.randomize_position()
+                apple.choice_sort()
+                #apple.draw(screen)
+            elif apple.sort_apple == 2 and snake.length > 1:
+                snake.length -= 10
+                apple.choice_sort()
             apple.draw(screen)
 
         pygame.display.update()
