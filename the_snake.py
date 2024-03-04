@@ -91,10 +91,11 @@ class Apple(GameObject):
         )
         pygame.draw.rect(surface, self.body_color, rect)
         pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
-        
+
+
 class Brick(Apple):
     """Класс описывающий кирпич, наследуется от Apple"""
-    
+
     def __init__(self):
         super().__init__()
         self.body_color = (160, 54, 35)
@@ -166,8 +167,6 @@ class Snake(GameObject):
             pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 
-
-
 # Функция обработки действий пользователя
 def handle_keys(game_object):
     """Функция обработки действий пользователя."""
@@ -199,23 +198,19 @@ def main():
         handle_keys(snake)
         snake.update_direction()
         snake.move()
-        
         # Появление кирпича.
         if snake.length % 5 == 0:
             brick.randomize_position()
             brick.draw(screen)
-            
         # Реакция на стоклновение с кирпичем.
         if snake.get_head_position() == brick.position:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-            
         # Реакция на столкновение головы змейки с телом.
         if snake.get_head_position() in snake.positions[1:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-        
-        # Реакция на поедание яблока.   
+        # Реакция на поедание яблока.
         if snake.get_head_position() == apple.position:
             # Если яблоко синее, +3 элемента.
             if apple.sort_apple == 1:
@@ -228,12 +223,9 @@ def main():
             # Если яблоко красное, увеличиваем на один элемент
             else:
                 snake.length += 1
-                
             apple.position = apple.randomize_position()
             apple.choice_sort()
             apple.draw(screen)
-        
-
         pygame.display.update()
 
 
