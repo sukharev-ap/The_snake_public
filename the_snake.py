@@ -1,4 +1,4 @@
-from random import choice, randint
+from random import randint
 import pygame
 
 # Инициализация PyGame:
@@ -30,7 +30,7 @@ SNAKE_COLOR = (0, 255, 0)
 
 # Скорость движения змейки:
 SPEED = 10
-speed = 10
+
 # Настройка игрового окна:
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
@@ -74,7 +74,7 @@ class Apple(GameObject):
 
     def choice_sort(self):
         """Описание видов яблок."""
-        self.sort_apple = randint(1, 2)
+        self.sort_apple = randint(1, 10)
         if self.sort_apple == 1:
             self.body_color = (0, 0, 255)
         elif self.sort_apple == 2:
@@ -91,6 +91,13 @@ class Apple(GameObject):
         )
         pygame.draw.rect(surface, self.body_color, rect)
         pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+        
+class Brick(Apple):
+    """Класс описывающий кирпич, наследуется от Apple"""
+    
+    def __init__(self):
+        super().__init__()
+        self.body_color = (160, 54, 35)
 
 
 class Snake(GameObject):
@@ -159,6 +166,8 @@ class Snake(GameObject):
             pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 
+
+
 # Функция обработки действий пользователя
 def handle_keys(game_object):
     """Функция обработки действий пользователя."""
@@ -181,33 +190,49 @@ def main():
     """Создаем экземпляры классов"""
     apple = Apple()
     snake = Snake()
+    brick = Brick()
 
     while True:
-        clock.tick(SPEED + 1)
+        clock.tick(SPEED + snake.length)
         apple.draw(screen)
         snake.draw(screen)
         handle_keys(snake)
         snake.update_direction()
         snake.move()
-
+        
+        # Появление кирпича.
+        if snake.length % 5 == 0:
+            brick.randomize_position()
+            brick.draw(screen)
+            
+        # Реакция на стоклновение с кирпичем.
+        if snake.get_head_position() == brick.position:
+            snake.reset()
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            
+        # Реакция на столкновение головы змейки с телом.
         if snake.get_head_position() in snake.positions[1:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-
+        
+        # Реакция на поедание яблока.   
         if snake.get_head_position() == apple.position:
-#            snake.length += 1
+            # Если яблоко синее, +3 элемента.
+            if apple.sort_apple == 1:
+                snake.length += 3
+            # Если яблоко фиалетовое, разбиваем кирпич, уменьшаем змейку
+            elif apple.sort_apple == 2 and snake.length > 1:
+                snake.length -= 1
+                snake.positions.pop()
+                screen.fill(BOARD_BACKGROUND_COLOR)
+            # Если яблоко красное, увеличиваем на один элемент
+            else:
+                snake.length += 1
+                
             apple.position = apple.randomize_position()
             apple.choice_sort()
-#            apple.draw(screen)
-            if apple.sort_apple == 1:
-                snake.length += 10
-                #apple.position = apple.randomize_position()
-                apple.choice_sort()
-                #apple.draw(screen)
-            elif apple.sort_apple == 2 and snake.length > 1:
-                snake.length -= 10
-                apple.choice_sort()
             apple.draw(screen)
+        
 
         pygame.display.update()
 
