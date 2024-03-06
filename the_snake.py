@@ -57,8 +57,6 @@ SCORE_FONT = pygame.font.Font(None, 36)
 SCORE_RECT = pygame.Rect(SCREEN_WIDTH - 150, 10, 140, 36)
 
 
-# Тут опишите все классы игры.
-
 class GameObject:
     """Базовый класс"""
 
@@ -71,58 +69,6 @@ class GameObject:
     def draw(self, surface):
         """Метод для отрисовки, по умолчанию pass."""
         pass
-
-
-class Apple(GameObject):
-    """Описания поведения яблока."""
-
-    def __init__(self, body_color=APPLE_COLOR):
-        super().__init__(body_color)
-        self.position = self.randomize_position()
-        self.sort_apple = self.choice_sort()
-
-    def randomize_position(self, action=None):
-        if action is None:
-            """Реализация слуйного появления яблока."""
-            return (
-                randint(0, GRID_WIDTH - 1) * GRID_SIZE,
-                randint(0, GRID_HEIGHT - 1) * GRID_SIZE
-            )
-        elif action == 'out':
-            SCORE_RECT = pygame.Rect(self.position[0], self.position[1], self.position[0] + 10, self.position[1] + 10)
-            screen.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
-            return (-GRID_SIZE, -GRID_SIZE)
-
-    def choice_sort(self):
-        """Описание видов яблок."""
-        self.sort_apple = randint(1, 10)
-        if self.sort_apple == 1:
-            self.body_color = SUPER_APPLE_COLOR
-        elif self.sort_apple == 2:
-            self.body_color = BAD_APPLE_COLOR
-        else:
-            self.body_color = (255, 0, 0)
-        return self.sort_apple
-
-    # Метод draw класса Apple
-    def draw(self, surface):
-        """Метод отриссовки яблока."""
-        rect = pygame.Rect(
-            (self.position[0], self.position[1]),
-            (GRID_SIZE, GRID_SIZE)
-        )
-
-        pygame.draw.rect(surface, self.body_color, rect)
-        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
-
-    """Класс описывающий кирпич, наследуется от Apple"""
-
-
-class Brick(Apple):
-    def __init__(self, body_color=BRICK_COLOR, position=(-GRID_SIZE, -GRID_SIZE)):
-        super().__init__(body_color)
-        self.body_color = BRICK_COLOR
-        self.position = position
 
 
 class Snake(GameObject):
@@ -181,6 +127,61 @@ class Snake(GameObject):
             pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 
+class Apple(GameObject):
+    """Описания поведения яблока."""
+
+    def __init__(self, positions):
+        super().__init__(body_color=APPLE_COLOR)
+        self.position = self.randomize_position()
+        self.sort_apple = self.choice_sort()
+        self.positions = positions
+
+    def randomize_position(self, action=None):
+        """Реализация слуйного появления яблока."""
+        while self.position not in self.positions:
+            if action is None:
+                self.position = (randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+                                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE)
+            elif action == 'out':
+                SCORE_RECT = (
+                    pygame.Rect(self.position[0], self.position[1],
+                                self.position[0] + GRID_SIZE,
+                                self.position[1] + GRID_SIZE))
+                screen.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
+                self.position = (-GRID_SIZE, -GRID_SIZE)
+
+    def choice_sort(self):
+        """Описание видов яблок."""
+        self.sort_apple = randint(1, 10)
+        if self.sort_apple == 1:
+            self.body_color = SUPER_APPLE_COLOR
+        elif self.sort_apple == 2:
+            self.body_color = BAD_APPLE_COLOR
+        else:
+            self.body_color = (255, 0, 0)
+        return self.sort_apple
+
+    # Метод draw класса Apple
+    def draw(self, surface):
+        """Метод отриссовки яблока."""
+        rect = pygame.Rect(
+            (self.position[0], self.position[1]),
+            (GRID_SIZE, GRID_SIZE)
+        )
+
+        pygame.draw.rect(surface, self.body_color, rect)
+        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+
+class Brick(Apple):
+    """Класс описывающий кирпич, наследуется от Apple"""
+
+    def __init__(self):
+        super().__init__(self)
+        self.position = self.randomize_position('out')
+        self.body_color = BRICK_COLOR
+
+
 # Функция обработки действий пользователя
 def handle_keys(game_object):
     """Функция обработки действий пользователя."""
@@ -200,10 +201,9 @@ def handle_keys(game_object):
 
 
 def draw_score(surface, score):
+    """Функция для отображения счета на экране"""
     # Очистка области для отображения счета
     surface.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
-
-    """Функция для отображения счета на экране"""
     score_text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
     score_rect = score_text.get_rect()
     score_rect.topright = (SCREEN_WIDTH - 10, 10)
@@ -212,60 +212,47 @@ def draw_score(surface, score):
 
 def main():
     """Создаем экземпляры классов"""
-    apple = Apple()
     snake = Snake()
+    apple = Apple(snake.positions)
     brick = Brick()
     is_created = False
-    score = 0  # Инициализируем счет
 
     while True:
 
         clock.tick(SPEED + snake.length)
-        draw_score(screen, score)  # Отображаем счет
-        apple.draw(screen)
+        draw_score(screen, snake.length)
         snake.draw(screen)
+        apple.draw(screen)
         brick.draw(screen)
         handle_keys(snake)
         snake.update_direction()
         snake.move()
-
-        # Реакция на столкновение головы змейки с телом или кирпичем.
+        # Реакция на столкновение головы змейки с телом или кирпичем
         if (snake.get_head_position() in snake.positions[1:]
                 or snake.get_head_position() == brick.position):
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
-            score = 0  # Обнуляем счет
-
-        # Реакция на поедание яблока.
+        # Реакция на поедание яблока
         if snake.get_head_position() == apple.position:
-
-            # Если яблоко синее, +3 элемента.
+            # Если яблоко синее, +3 элемента
             if apple.sort_apple == SUPER_APPLE:
                 snake.length += 3
-                score += 3  # Увеличиваем счет на 3
-
-
             # Если яблоко фиалетовое, разбиваем кирпич, уменьшаем змейку
             elif apple.sort_apple == BAD_APPPLE and snake.length > 1:
                 snake.length -= 1
                 snake.positions.pop()
                 screen.fill(BOARD_BACKGROUND_COLOR)
-
             # Если яблоко красное, увеличиваем на один элемент
             else:
                 snake.length += 1
-                score += 1  # Увеличиваем счет на 1
-
             apple.position = apple.randomize_position()
             apple.choice_sort()
             apple.draw(screen)
-
         # Появление кирпича.
-        if snake.length == 2 and is_created is False:  # % FIVE_EATEN == 0:
+        if snake.length % FIVE_EATEN == 0 and is_created is False:
             brick.position = brick.randomize_position()
             is_created = True
-
-        if snake.length > 2 and is_created is True:  # % FIVE_EATEN > 0:
+        if snake.length % FIVE_EATEN > 0 and is_created is True:
             brick.position = brick.randomize_position('out')
             # screen.fill(BOARD_BACKGROUND_COLOR)
             is_created = False
