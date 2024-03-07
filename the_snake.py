@@ -130,25 +130,17 @@ class Snake(GameObject):
 class Apple(GameObject):
     """Описания поведения яблока."""
 
-    def __init__(self, positions):
+    def __init__(self):
         super().__init__(body_color=APPLE_COLOR)
         self.position = self.randomize_position()
         self.sort_apple = self.choice_sort()
-        self.positions = positions
 
-    def randomize_position(self, action=None):
+    @staticmethod
+    def randomize_position():
         """Реализация слуйного появления яблока."""
-        while self.position not in self.positions:
-            if action is None:
-                self.position = (randint(0, GRID_WIDTH - 1) * GRID_SIZE,
-                                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE)
-            elif action == 'out':
-                SCORE_RECT = (
-                    pygame.Rect(self.position[0], self.position[1],
-                                self.position[0] + GRID_SIZE,
-                                self.position[1] + GRID_SIZE))
-                screen.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
-                self.position = (-GRID_SIZE, -GRID_SIZE)
+        return (
+            randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+            randint(0, GRID_HEIGHT - 1) * GRID_SIZE)
 
     def choice_sort(self):
         """Описание видов яблок."""
@@ -177,9 +169,17 @@ class Brick(Apple):
     """Класс описывающий кирпич, наследуется от Apple"""
 
     def __init__(self):
-        super().__init__(self)
-        self.position = self.randomize_position('out')
+        super().__init__()
         self.body_color = BRICK_COLOR
+        self.position = self.brick_out()
+
+    def brick_out(self):
+        """Метод для удаления кирпича"""
+        brick_rect = pygame.Rect(self.position[0],
+                                 self.position[1],
+                                 GRID_SIZE, GRID_SIZE)
+        screen.fill(BOARD_BACKGROUND_COLOR, brick_rect)
+        return -GRID_SIZE, -GRID_SIZE
 
 
 # Функция обработки действий пользователя
@@ -213,7 +213,7 @@ def draw_score(surface, score):
 def main():
     """Создаем экземпляры классов"""
     snake = Snake()
-    apple = Apple(snake.positions)
+    apple = Apple()
     brick = Brick()
     is_created = False
 
@@ -221,12 +221,12 @@ def main():
 
         clock.tick(SPEED + snake.length)
         draw_score(screen, snake.length)
-        snake.draw(screen)
         apple.draw(screen)
         brick.draw(screen)
         handle_keys(snake)
         snake.update_direction()
         snake.move()
+        snake.draw(screen)
         # Реакция на столкновение головы змейки с телом или кирпичем
         if (snake.get_head_position() in snake.positions[1:]
                 or snake.get_head_position() == brick.position):
@@ -245,16 +245,25 @@ def main():
             # Если яблоко красное, увеличиваем на один элемент
             else:
                 snake.length += 1
+            # Отриссовка яблока за пределами змейки
+            while True:
+                new_apple_position = apple.randomize_position()
+                if new_apple_position not in snake.positions:
+                    apple.position = new_apple_position
+                    break
             apple.position = apple.randomize_position()
             apple.choice_sort()
             apple.draw(screen)
         # Появление кирпича.
         if snake.length % FIVE_EATEN == 0 and is_created is False:
-            brick.position = brick.randomize_position()
-            is_created = True
+            while True:
+                new_brick_position = brick.randomize_position()
+                if new_brick_position not in snake.positions:
+                    brick.position = new_brick_position
+                    is_created = True
+                    break
         if snake.length % FIVE_EATEN > 0 and is_created is True:
-            brick.position = brick.randomize_position('out')
-            # screen.fill(BOARD_BACKGROUND_COLOR)
+            brick.position = brick.brick_out()
             is_created = False
         pygame.display.update()
 
