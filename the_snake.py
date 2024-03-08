@@ -210,6 +210,16 @@ def draw_score(surface, score):
     surface.blit(score_text, score_rect)
 
 
+def not_in_snake(positions, func_position):
+    """Функция отрисовки объекта за пределами змейки"""
+    while True:
+        new_apple_position = func_position
+        if new_apple_position not in positions:
+            new_position = new_apple_position
+        break
+    return new_position
+
+
 def main():
     """Создаем экземпляры классов"""
     snake = Snake()
@@ -246,23 +256,20 @@ def main():
             else:
                 snake.length += 1
             # Отриссовка яблока за пределами змейки
-            while True:
-                new_apple_position = apple.randomize_position()
-                if new_apple_position not in snake.positions:
-                    apple.position = new_apple_position
-                    break
-            apple.position = apple.randomize_position()
+            apple.position = (
+                not_in_snake(snake.positions,
+                             apple.randomize_position()
+                             ))
             apple.choice_sort()
             apple.draw(screen)
         # Появление кирпича.
         if snake.length % FIVE_EATEN == 0 and is_created is False:
-            while True:
-                new_brick_position = brick.randomize_position()
-                if new_brick_position not in snake.positions:
-                    brick.position = new_brick_position
-                    is_created = True
-                    break
-        if snake.length % FIVE_EATEN > 0 and is_created is True:
+            brick.position = (
+                not_in_snake(snake.positions,
+                             brick.randomize_position()
+                             ))
+            is_created = True
+        elif snake.length % FIVE_EATEN > 0 and is_created is True:
             brick.position = brick.brick_out()
             is_created = False
         pygame.display.update()
