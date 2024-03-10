@@ -19,6 +19,9 @@ RIGHT = (1, 0)
 # Цвет фона - черный:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 
+# Цвет текста
+TEXT_COLOR = (255, 255, 255)
+
 # Цвет границы ячейки
 BORDER_COLOR = (93, 216, 228)
 
@@ -36,7 +39,7 @@ BRICK_COLOR = (160, 54, 35)
 
 # Цвет змейки
 SNAKE_COLOR = (0, 255, 0)
-FIVE_EATEN = 5
+BOOST_GROW = 5
 
 # Скорость движения змейки:
 SPEED = 10
@@ -69,6 +72,15 @@ class GameObject:
     def draw(self, surface):
         """Метод для отрисовки, по умолчанию pass."""
         pass
+
+    def rect_aaaa(self, surface, color):
+        """Метод отриссовки яблока."""
+        rect = pygame.Rect(
+            (self.position[0], self.position[1]),
+            (GRID_SIZE, GRID_SIZE))
+
+        pygame.draw.rect(surface, self.body_color, rect)
+        pygame.draw.rect(surface, color, rect, 1)
 
 
 class Snake(GameObject):
@@ -114,12 +126,14 @@ class Snake(GameObject):
 
     def draw(self, surface):
         """Отрисовка змейки"""
+        # self.rect(surface, BORDER_COLOR)
         # Отрисовка головы змейки
         head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(surface, self.body_color, head_rect)
         pygame.draw.rect(surface, BORDER_COLOR, head_rect, 1)
         # Затирание последнего сегмента
         if self.last:
+            # self.rect(surface, BOARD_BACKGROUND_COLOR)
             last_rect = pygame.Rect(
                 (self.last[0], self.last[1]),
                 (GRID_SIZE, GRID_SIZE)
@@ -144,18 +158,21 @@ class Apple(GameObject):
 
     def choice_sort(self):
         """Описание видов яблок."""
-        self.sort_apple = randint(1, 10)
+        begin_num = 1
+        end_num = 10
+        self.sort_apple = randint(begin_num, end_num)
         if self.sort_apple == 1:
             self.body_color = SUPER_APPLE_COLOR
         elif self.sort_apple == 2:
             self.body_color = BAD_APPLE_COLOR
         else:
-            self.body_color = (255, 0, 0)
+            self.body_color = APPLE_COLOR
         return self.sort_apple
 
     # Метод draw класса Apple
     def draw(self, surface):
         """Метод отриссовки яблока."""
+        # self.rect(surface, BORDER_COLOR)
         rect = pygame.Rect(
             (self.position[0], self.position[1]),
             (GRID_SIZE, GRID_SIZE)
@@ -204,20 +221,23 @@ def draw_score(surface, score):
     """Функция для отображения счета на экране"""
     # Очистка области для отображения счета
     surface.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
-    score_text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
+    score_text = SCORE_FONT.render(f"Score: {score}", True, TEXT_COLOR)
     score_rect = score_text.get_rect()
     score_rect.topright = (SCREEN_WIDTH - 10, 10)
     surface.blit(score_text, score_rect)
 
 
-def not_in_snake(positions, func_position):
+def not_in_snake(length, positions, func_position, reset_func):
     """Функция отрисовки объекта за пределами змейки"""
-    while True:
-        new_apple_position = func_position
-        if new_apple_position not in positions:
-            new_position = new_apple_position
-        break
-    return new_position
+    if length > (GRID_HEIGHT * GRID_WIDTH):
+        while True:
+            new_apple_position = func_position
+            if new_apple_position not in positions:
+                new_position = new_apple_position
+            break
+        return new_position
+    else:
+        reset_func
 
 
 def main():
@@ -257,19 +277,21 @@ def main():
                 snake.length += 1
             # Отриссовка яблока за пределами змейки
             apple.position = (
-                not_in_snake(snake.positions,
-                             apple.randomize_position()
+                not_in_snake(snake.length, snake.positions,
+                             apple.randomize_position(),
+                             snake.reset()
                              ))
             apple.choice_sort()
             apple.draw(screen)
         # Появление кирпича.
-        if snake.length % FIVE_EATEN == 0 and is_created is False:
+        if snake.length % BOOST_GROW == 0 and is_created is False:
             brick.position = (
-                not_in_snake(snake.positions,
-                             brick.randomize_position()
+                not_in_snake(snake.length, snake.positions,
+                             brick.randomize_position(),
+                             snake.reset()
                              ))
             is_created = True
-        elif snake.length % FIVE_EATEN > 0 and is_created is True:
+        elif snake.length % BOOST_GROW > 0 and is_created is True:
             brick.position = brick.brick_out()
             is_created = False
         pygame.display.update()
