@@ -223,21 +223,22 @@ def draw_score(surface, score):
     surface.fill(BOARD_BACKGROUND_COLOR, SCORE_RECT)
     score_text = SCORE_FONT.render(f"Score: {score}", True, TEXT_COLOR)
     score_rect = score_text.get_rect()
-    score_rect.topright = (SCREEN_WIDTH - 10, 10)
+    score_rect.topright = (SCREEN_WIDTH - GRID_SIZE, GRID_SIZE)
     surface.blit(score_text, score_rect)
 
 
 def not_in_snake(length, positions, func_position, reset_func):
     """Функция отрисовки объекта за пределами змейки"""
-    if length > (GRID_HEIGHT * GRID_WIDTH):
+    if length < (GRID_HEIGHT * GRID_WIDTH):
         while True:
             new_apple_position = func_position
             if new_apple_position not in positions:
                 new_position = new_apple_position
-            break
-        return new_position
+                return new_position
     else:
-        reset_func
+        reset_func()
+        screen.fill(BOARD_BACKGROUND_COLOR)
+        return func_position
 
 
 def main():
@@ -279,19 +280,19 @@ def main():
             apple.position = (
                 not_in_snake(snake.length, snake.positions,
                              apple.randomize_position(),
-                             snake.reset()
+                             snake.reset
                              ))
             apple.choice_sort()
             apple.draw(screen)
         # Появление кирпича.
-        if snake.length % BOOST_GROW == 0 and is_created is False:
+        if snake.length % BOOST_GROW == 0 and not is_created:
             brick.position = (
                 not_in_snake(snake.length, snake.positions,
                              brick.randomize_position(),
-                             snake.reset()
+                             snake.reset
                              ))
             is_created = True
-        elif snake.length % BOOST_GROW > 0 and is_created is True:
+        elif snake.length % BOOST_GROW > 0 and not is_created:
             brick.position = brick.brick_out()
             is_created = False
         pygame.display.update()
