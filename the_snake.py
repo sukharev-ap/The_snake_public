@@ -36,10 +36,11 @@ BAD_APPPLE = 2
 
 # Цвет кирпича
 BRICK_COLOR = (160, 54, 35)
+BRICK_ADD = 5
 
 # Цвет змейки
 SNAKE_COLOR = (0, 255, 0)
-BOOST_GROW = 5
+
 
 # Скорость движения змейки:
 SPEED = 10
@@ -59,13 +60,16 @@ SCORE_FONT = pygame.font.Font(None, 36)
 # Константа для области отображения счета
 SCORE_RECT = pygame.Rect(SCREEN_WIDTH - 150, 10, 140, 36)
 
+# Центр поля
+CENTER = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+
 
 class GameObject:
     """Базовый класс"""
 
     # Инициализация базовых атрибутов, позиция и цвет
-    def __init__(self, body_color=BORDER_COLOR):
-        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+    def __init__(self, body_color=BORDER_COLOR, position=CENTER):
+        self.position = position
         self.body_color = body_color
 
     # Абстактный метод отрисовки объекта на экране.
@@ -73,10 +77,10 @@ class GameObject:
         """Метод для отрисовки, по умолчанию pass."""
         pass
 
-    def rect_aaaa(self, surface, color):
+    def rect(self, surface, color, position):
         """Метод отриссовки яблока."""
         rect = pygame.Rect(
-            (self.position[0], self.position[1]),
+            position,
             (GRID_SIZE, GRID_SIZE))
 
         pygame.draw.rect(surface, self.body_color, rect)
@@ -126,18 +130,12 @@ class Snake(GameObject):
 
     def draw(self, surface):
         """Отрисовка змейки"""
-        # self.rect(surface, BORDER_COLOR)
-        # Отрисовка головы змейки
-        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(surface, self.body_color, head_rect)
-        pygame.draw.rect(surface, BORDER_COLOR, head_rect, 1)
+        self.rect(surface, BORDER_COLOR, self.positions[0])
         # Затирание последнего сегмента
         if self.last:
-            # self.rect(surface, BOARD_BACKGROUND_COLOR)
             last_rect = pygame.Rect(
                 (self.last[0], self.last[1]),
-                (GRID_SIZE, GRID_SIZE)
-            )
+                (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 
@@ -161,9 +159,9 @@ class Apple(GameObject):
         begin_num = 1
         end_num = 10
         self.sort_apple = randint(begin_num, end_num)
-        if self.sort_apple == 1:
+        if self.sort_apple == SUPER_APPLE:
             self.body_color = SUPER_APPLE_COLOR
-        elif self.sort_apple == 2:
+        elif self.sort_apple == BAD_APPPLE:
             self.body_color = BAD_APPLE_COLOR
         else:
             self.body_color = APPLE_COLOR
@@ -172,14 +170,7 @@ class Apple(GameObject):
     # Метод draw класса Apple
     def draw(self, surface):
         """Метод отриссовки яблока."""
-        # self.rect(surface, BORDER_COLOR)
-        rect = pygame.Rect(
-            (self.position[0], self.position[1]),
-            (GRID_SIZE, GRID_SIZE)
-        )
-
-        pygame.draw.rect(surface, self.body_color, rect)
-        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+        self.rect(surface, BORDER_COLOR, self.position)
 
 
 class Brick(Apple):
@@ -285,14 +276,14 @@ def main():
             apple.choice_sort()
             apple.draw(screen)
         # Появление кирпича.
-        if snake.length % BOOST_GROW == 0 and not is_created:
+        if snake.length % BRICK_ADD == 0 and not is_created:
             brick.position = (
                 not_in_snake(snake.length, snake.positions,
                              brick.randomize_position(),
                              snake.reset
                              ))
             is_created = True
-        elif snake.length % BOOST_GROW > 0 and not is_created:
+        elif snake.length % BRICK_ADD > 0 and is_created:
             brick.position = brick.brick_out()
             is_created = False
         pygame.display.update()
